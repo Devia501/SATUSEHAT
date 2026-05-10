@@ -1,8 +1,3 @@
-"""
-SATUSEHAT Patient Registration Script
-Alur: Auth → Cari Pasien & Dokter → Buat Location → Buat Encounter
-"""
-
 import requests
 import json
 import uuid
@@ -12,9 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ─────────────────────────────────────────────
 # Konfigurasi
-# ─────────────────────────────────────────────
 CLIENT_ID     = os.getenv("SATUSEHAT_CLIENT_ID", "3KV28sv3jGLlcIyX0pspInlAs6raEaDAqF2Miw2nB0jz9ZjP")
 CLIENT_SECRET = os.getenv("SATUSEHAT_CLIENT_SECRET", "3RCFPOXQJwFAEAEfea5ZInDcJfA5Itg322ndxa1KkzHUM2x9zRTQWZ422NNskr4is")
 ORG_ID        = os.getenv("SATUSEHAT_ORG_ID", "9c7605c1-8d6e-46a0-b798-32aedb2032e6")
@@ -26,9 +19,7 @@ NIK_PASIEN = "1000000000000007"
 NIK_DOKTER = "7209061211900001"
 
 
-# ─────────────────────────────────────────────
 # Helper
-# ─────────────────────────────────────────────
 def log(step: str, msg: str):
     print(f"\n{'='*60}")
     print(f"  STEP {step}")
@@ -48,9 +39,7 @@ def handle_response(resp: requests.Response, label: str) -> dict:
     return resp.json()
 
 
-# ─────────────────────────────────────────────
 # STEP 1: GET ACCESS TOKEN
-# ─────────────────────────────────────────────
 def get_access_token() -> str:
     log("1", "Mendapatkan Access Token dari SATUSEHAT OAuth2...")
 
@@ -68,9 +57,7 @@ def get_access_token() -> str:
     return token
 
 
-# ─────────────────────────────────────────────
 # STEP 2: Mencari Ihs Number Pasien & Dokter
-# ─────────────────────────────────────────────
 def get_patient_ihs(token: str) -> str:
     log("2a", f"Mencari IHS Number Pasien (NIK: {NIK_PASIEN})...")
 
@@ -113,9 +100,7 @@ def get_practitioner_ihs(token: str) -> str:
     return ihs_id
 
 
-# ─────────────────────────────────────────────
 # STEP 3: Membuat LOCATION
-# ─────────────────────────────────────────────
 def create_location(token: str) -> str:
     log("3", "Membuat resource Location (Ruang Poli Umum)...")
 
@@ -124,13 +109,12 @@ def create_location(token: str) -> str:
         "Content-Type":  "application/json",
     }
 
-    # Menambahkan uuid supaya nama lokasi tidak dianggap duplikat oleh server
     unique_id = str(uuid.uuid4())[:8]
 
     payload = {
         "resourceType": "Location",
         "status": "active",
-        "name": f"Ruang Poli Umum {unique_id}", # Ini yang diubah agar unik
+        "name": f"Ruang Poli Umum {unique_id}",
         "description": "Ruang Poliklinik Umum Lantai 1",
         "mode": "instance",
         "physicalType": {
@@ -153,9 +137,7 @@ def create_location(token: str) -> str:
     print(f"    Location ID: {location_id}")
     return location_id
 
-# ─────────────────────────────────────────────
 # STEP 4: Membuat ENCOUNTER
-# ─────────────────────────────────────────────
 def create_encounter(
     token: str,
     patient_ihs: str,
@@ -178,7 +160,7 @@ def create_encounter(
         "identifier": [
             {
                 "system": f"http://sys-ids.kemkes.go.id/encounter/{ORG_ID}",
-                "value": f"REGISTRATION-{uuid.uuid4().hex[:8].upper()}" # Menjawab Rule 10117
+                "value": f"REGISTRATION-{uuid.uuid4().hex[:8].upper()}"
             }
         ],
         "class": {
@@ -210,7 +192,7 @@ def create_encounter(
             {
                 "status": "arrived",
                 "period": {
-                    "start": now_utc # Menjawab Rule 10122
+                    "start": now_utc
                 }
             }
         ],
@@ -221,7 +203,7 @@ def create_encounter(
             }
         }],
         "serviceProvider": {
-            "reference": f"Organization/{ORG_ID}" # Pastikan ORG_ID di .env sudah benar (Rule 10124)
+            "reference": f"Organization/{ORG_ID}" 
         }
     }
 
@@ -234,9 +216,7 @@ def create_encounter(
     print(f"    Timestamp   : {now_utc}")
     return body
 
-# ─────────────────────────────────────────────
 # MAIN FLOW
-# ─────────────────────────────────────────────
 def main():
     print("  SATUSEHAT PATIENT REGISTRATION FLOW")
     print("  Environment: SANDBOX/DEVELOPMENT")
