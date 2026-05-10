@@ -1,0 +1,191 @@
+{
+  "info": {
+    "name": "SATUSEHAT Patient Registration",
+    "description": "Koleksi request API untuk simulasi pendaftaran pasien di SATUSEHAT Sandbox.\nAlur: Auth → Cari Pasien → Cari Dokter → Buat Location → Buat Encounter",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_auth_url", "value": "https://api-satusehat-stg.dto.kemkes.go.id/oauth2/v1" },
+    { "key": "base_fhir_url", "value": "https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1" },
+    { "key": "client_id",     "value": "YOUR_CLIENT_ID" },
+    { "key": "client_secret", "value": "YOUR_CLIENT_SECRET" },
+    { "key": "org_id",        "value": "10000004" },
+    { "key": "access_token",      "value": "" },
+    { "key": "patient_ihs_id",    "value": "" },
+    { "key": "practitioner_ihs_id", "value": "" },
+    { "key": "location_id",       "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Step 1 — Get Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('access_token', json.access_token);",
+              "console.log('Token:', json.access_token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id",     "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_auth_url}}/accesstoken?grant_type=client_credentials",
+          "host": ["{{base_auth_url}}"],
+          "path": ["accesstoken"],
+          "query": [{ "key": "grant_type", "value": "client_credentials" }]
+        }
+      }
+    },
+    {
+      "name": "Step 2a — Get Patient IHS Number (by NIK)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var json = pm.response.json();",
+              "var ihs = json.entry[0].resource.id;",
+              "pm.collectionVariables.set('patient_ihs_id', ihs);",
+              "console.log('Patient IHS:', ihs);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_fhir_url}}/Patient?identifier=https://fhir.kemkes.go.id/id/nik|1000000000000001",
+          "host": ["{{base_fhir_url}}"],
+          "path": ["Patient"],
+          "query": [
+            {
+              "key": "identifier",
+              "value": "https://fhir.kemkes.go.id/id/nik|1000000000000001"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Step 2b — Get Practitioner IHS Number (by NIK)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var json = pm.response.json();",
+              "var ihs = json.entry[0].resource.id;",
+              "pm.collectionVariables.set('practitioner_ihs_id', ihs);",
+              "console.log('Practitioner IHS:', ihs);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_fhir_url}}/Practitioner?identifier=https://fhir.kemkes.go.id/id/nik|1000000000000002",
+          "host": ["{{base_fhir_url}}"],
+          "path": ["Practitioner"],
+          "query": [
+            {
+              "key": "identifier",
+              "value": "https://fhir.kemkes.go.id/id/nik|1000000000000002"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Step 3 — Create Location",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('location_id', json.id);",
+              "console.log('Location ID:', json.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type",  "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resourceType\": \"Location\",\n  \"status\": \"active\",\n  \"name\": \"Ruang Poli Umum\",\n  \"description\": \"Ruang Poliklinik Umum Lantai 1\",\n  \"mode\": \"instance\",\n  \"physicalType\": {\n    \"coding\": [{\n      \"system\": \"http://terminology.hl7.org/CodeSystem/location-physical-type\",\n      \"code\": \"ro\",\n      \"display\": \"Room\"\n    }]\n  },\n  \"managingOrganization\": {\n    \"reference\": \"Organization/{{org_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_fhir_url}}/Location",
+          "host": ["{{base_fhir_url}}"],
+          "path": ["Location"]
+        }
+      }
+    },
+    {
+      "name": "Step 4 — Create Encounter ✅",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201 Created', function() {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "console.log('Encounter ID:', json.id);"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "var now = new Date().toISOString().replace('Z', '+00:00');",
+              "pm.collectionVariables.set('timestamp_now', now);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type",  "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resourceType\": \"Encounter\",\n  \"status\": \"arrived\",\n  \"class\": {\n    \"system\": \"http://terminology.hl7.org/CodeSystem/v3-ActCode\",\n    \"code\": \"AMB\",\n    \"display\": \"ambulatory\"\n  },\n  \"subject\": {\n    \"reference\": \"Patient/{{patient_ihs_id}}\",\n    \"display\": \"Pasien\"\n  },\n  \"participant\": [{\n    \"type\": [{\n      \"coding\": [{\n        \"system\": \"http://terminology.hl7.org/CodeSystem/v3-ParticipationType\",\n        \"code\": \"ATND\",\n        \"display\": \"attender\"\n      }]\n    }],\n    \"individual\": {\n      \"reference\": \"Practitioner/{{practitioner_ihs_id}}\",\n      \"display\": \"Dokter\"\n    }\n  }],\n  \"period\": {\n    \"start\": \"{{timestamp_now}}\"\n  },\n  \"location\": [{\n    \"location\": {\n      \"reference\": \"Location/{{location_id}}\",\n      \"display\": \"Ruang Poli Umum\"\n    }\n  }],\n  \"serviceProvider\": {\n    \"reference\": \"Organization/{{org_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_fhir_url}}/Encounter",
+          "host": ["{{base_fhir_url}}"],
+          "path": ["Encounter"]
+        }
+      }
+    }
+  ]
+}

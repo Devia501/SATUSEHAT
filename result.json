@@ -1,0 +1,71 @@
+{
+  "patient_ihs_id": "P02029539408",
+  "practitioner_ihs_id": "100009880728",
+  "location_id": "a30b73c9-11c6-4ef2-99d6-cd953feb7c53",
+  "encounter_id": "9c2ef230-9cd4-42c7-80a6-07f03fa61111",
+  "encounter_response": {
+    "class": {
+      "code": "AMB",
+      "display": "ambulatory",
+      "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+    },
+    "id": "9c2ef230-9cd4-42c7-80a6-07f03fa61111",
+    "identifier": [
+      {
+        "system": "http://sys-ids.kemkes.go.id/encounter/9c7605c1-8d6e-46a0-b798-32aedb2032e6",
+        "value": "REGISTRATION-1F62289D"
+      }
+    ],
+    "location": [
+      {
+        "location": {
+          "display": "Ruang Poli Umum",
+          "reference": "Location/a30b73c9-11c6-4ef2-99d6-cd953feb7c53"
+        }
+      }
+    ],
+    "meta": {
+      "lastUpdated": "2026-05-10T17:21:11.703417+00:00",
+      "versionId": "MTc3ODQzMzY3MTcwMzQxNzAwMA"
+    },
+    "participant": [
+      {
+        "individual": {
+          "display": "Dokter",
+          "reference": "Practitioner/100009880728"
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "code": "ATND",
+                "display": "attender",
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "period": {
+      "start": "2026-05-10T17:21:09+00:00"
+    },
+    "resourceType": "Encounter",
+    "serviceProvider": {
+      "reference": "Organization/9c7605c1-8d6e-46a0-b798-32aedb2032e6"
+    },
+    "status": "arrived",
+    "statusHistory": [
+      {
+        "period": {
+          "start": "2026-05-10T17:21:09+00:00"
+        },
+        "status": "arrived"
+      }
+    ],
+    "subject": {
+      "display": "Pasien",
+      "reference": "Patient/P02029539408"
+    }
+  }
+}
